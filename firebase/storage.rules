@@ -1,0 +1,15 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /users/{userId}/{allPaths=**} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 250 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.size < 250 * 1024 * 1024
+        && request.resource.contentType.matches('audio/.*');
+      allow delete: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}

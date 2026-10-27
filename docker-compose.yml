@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=True
+      - FIREBASE_PROJECT_ID=vocal-separater-5eb7c
+      - FIREBASE_STORAGE_BUCKET=vocal-separater-5eb7c.firebasestorage.app
+      - DEMUCS_MODEL=htdemucs_ft
+    volumes:
+      - ./backend:/app
+      - /tmp/stemai_processing:/tmp/stemai_processing

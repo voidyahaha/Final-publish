@@ -1,0 +1,156 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: #080B14;
+    color: #F8FAFC;
+    font-family: 'Inter', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0D1117;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #2D3748;
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #4B5563;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-2.5 bg-gradient-primary text-white font-semibold rounded-xl
+           hover:opacity-90 active:scale-95 transition-all duration-200
+           shadow-glow-sm hover:shadow-glow-md;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-2.5 bg-bg-hover border border-border text-text-primary font-semibold
+           rounded-xl hover:border-accent-primary hover:bg-bg-card transition-all duration-200;
+  }
+
+  .btn-ghost {
+    @apply px-4 py-2 text-text-secondary hover:text-text-primary hover:bg-bg-hover
+           rounded-lg transition-all duration-200;
+  }
+
+  .card {
+    @apply bg-bg-card border border-border rounded-2xl p-6 shadow-card;
+  }
+
+  .card-hover {
+    @apply card hover:border-border-light hover:shadow-card-hover transition-all duration-300;
+  }
+
+  .input {
+    @apply w-full bg-bg-secondary border border-border rounded-xl px-4 py-3
+           text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-primary
+           focus:ring-1 focus:ring-accent-primary/30 transition-all duration-200;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-to-r from-accent-primary to-accent-secondary bg-clip-text text-transparent;
+  }
+
+  .sidebar-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-text-secondary
+           hover:text-text-primary hover:bg-bg-hover cursor-pointer transition-all duration-200
+           relative;
+  }
+
+  .sidebar-item.active {
+    @apply bg-accent-primary/10 text-accent-primary border border-accent-primary/20;
+  }
+
+  .stem-card {
+    @apply bg-bg-secondary border border-border rounded-xl p-4 flex items-center
+           justify-between gap-4 hover:border-border-light transition-all duration-200;
+  }
+
+  .progress-bar {
+    @apply h-1.5 bg-bg-hover rounded-full overflow-hidden;
+  }
+
+  .progress-fill {
+    @apply h-full bg-gradient-primary rounded-full transition-all duration-300;
+  }
+
+  .waveform-bar {
+    @apply w-1 bg-accent-primary rounded-full;
+    animation: waveform 1.2s ease-in-out infinite;
+  }
+
+  .glass {
+    backdrop-filter: blur(12px);
+    background: rgba(15, 23, 36, 0.8);
+    border: 1px solid rgba(30, 41, 59, 0.8);
+  }
+}
+
+/* Waveform animation */
+@keyframes waveformPulse {
+  0%, 100% { transform: scaleY(0.3); }
+  50% { transform: scaleY(1); }
+}
+
+.waveform-bar:nth-child(1) { animation-delay: 0s; }
+.waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+.waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+.waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+.waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+
+/* Custom range input */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+input[type="range"]::-webkit-slider-track {
+  background: #1E293B;
+  height: 4px;
+  border-radius: 2px;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 14px;
+  width: 14px;
+  border-radius: 50%;
+  background: #6366F1;
+  margin-top: -5px;
+  box-shadow: 0 0 8px rgba(99,102,241,0.5);
+}
+
+/* Drop zone */
+.dropzone-active {
+  border-color: #6366F1 !important;
+  background: rgba(99, 102, 241, 0.05) !important;
+  box-shadow: inset 0 0 30px rgba(99, 102, 241, 0.05), 0 0 20px rgba(99, 102, 241, 0.2);
+}
