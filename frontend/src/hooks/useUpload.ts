@@ -54,7 +54,7 @@ export function useUpload(): UseUploadReturn {
       setUploadProgress(0)
 
       try {
-        const result = await api.uploadFile(file, userId, (pct, bytes, total) => {
+        const result = await api.uploadFile(file, userId, folder, (pct, bytes, total) => {
           setUploadProgress(pct)
           setUploadedBytes(bytes)
           setTotalBytes(total)

@@ -3,6 +3,7 @@ import { Job, JobStatus, StemFile } from '../../types'
 import AudioPlayer from '../audio/AudioPlayer'
 import clsx from 'clsx'
 import { formatFileSize, formatDuration } from '../../services/storage'
+import { resolveAudioUrl } from '../../services/api'
 import { formatDistanceToNow } from 'date-fns'
 
 const STATUS_CONFIG: Record<JobStatus, { label: string; color: string; bg: string; icon: string }> = {
@@ -151,7 +152,7 @@ export default function JobCard({ job, expanded = false, onToggle, onDelete }: J
             {job.mixedTrackUrl && (
               <div className="space-y-2">
                 <h4 className="text-xs font-semibold text-text-muted uppercase tracking-wider">Mixed Track</h4>
-                <AudioPlayer url={job.mixedTrackUrl} title="Final Mix" color="#EC4899" />
+                <AudioPlayer url={resolveAudioUrl(job.mixedTrackUrl)} title="Final Mix" color="#EC4899" />
               </div>
             )}
           </motion.div>
@@ -164,6 +165,7 @@ export default function JobCard({ job, expanded = false, onToggle, onDelete }: J
 function StemRow({ stem }: { stem: StemFile }) {
   const color = STEM_COLORS[stem.stem] || '#6366F1'
   const icon = STEM_ICONS[stem.stem] || '🎵'
+  const audioUrl = resolveAudioUrl(stem.downloadUrl)
 
   return (
     <div className="stem-card">
@@ -180,11 +182,11 @@ function StemRow({ stem }: { stem: StemFile }) {
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {stem.downloadUrl && (
+        {audioUrl && (
           <>
-            <AudioPlayer url={stem.downloadUrl} color={color} compact />
+            <AudioPlayer url={audioUrl} color={color} compact />
             <a
-              href={stem.downloadUrl}
+              href={audioUrl}
               download={`${stem.stem}.mp3`}
               className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-bg-hover transition-all"
               onClick={(e) => e.stopPropagation()}

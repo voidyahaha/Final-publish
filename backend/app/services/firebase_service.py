@@ -20,6 +20,32 @@ def firebase_ready() -> bool:
     """Return whether the Admin SDK has been initialized for this process."""
     return _firebase_app is not None
 
+def _find_service_account_file() -> Optional[str]:
+    """Auto-discover a Firebase service account JSON in known paths."""
+    candidate_paths = []
+    if settings.FIREBASE_CREDENTIALS_PATH:
+        candidate_paths.append(settings.FIREBASE_CREDENTIALS_PATH)
+        # Also relative to backend directory
+        backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        candidate_paths.append(os.path.join(backend_dir, settings.FIREBASE_CREDENTIALS_PATH))
+
+    # Search in backend directory and project root for any *firebase-adminsdk*.json
+    search_dirs = [
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+        os.getcwd(),
+        os.path.dirname(os.getcwd()),
+    ]
+    for sdir in search_dirs:
+        if os.path.isdir(sdir):
+            for fname in os.listdir(sdir):
+                if fname.endswith(".json") and ("firebase-adminsdk" in fname or "service-account" in fname):
+                    candidate_paths.append(os.path.join(sdir, fname))
+
+    for p in candidate_paths:
+        if p and os.path.isfile(p):
+            return os.path.abspath(p)
+    return None
+
 def init_firebase():
     """Initialize Firebase Admin SDK."""
     global _firebase_app
@@ -27,27 +53,24 @@ def init_firebase():
         return _firebase_app
 
     try:
-        cred_path = settings.FIREBASE_CREDENTIALS_PATH
+        cred = None
+        discovered_path = _find_service_account_file()
 
-        if settings.FIREBASE_SERVICE_ACCOUNT_JSON:
+        if settings.FIREBASE_SERVICE_ACCOUNT_JSON and settings.FIREBASE_SERVICE_ACCOUNT_JSON.strip():
             cred = credentials.Certificate(json.loads(settings.FIREBASE_SERVICE_ACCOUNT_JSON))
             logger.info("Firebase: using service account JSON from environment")
-        elif cred_path and os.path.exists(cred_path):
-            # Use explicit service account file
-            cred = credentials.Certificate(cred_path)
-            logger.info(f"Firebase: using credentials from {cred_path}")
-        elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
-            # Use application default credentials
+        elif discovered_path:
+            cred = credentials.Certificate(discovered_path)
+            logger.info(f"Firebase: using credentials from {discovered_path}")
+        elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS") and os.path.isfile(os.environ.get("GOOGLE_APPLICATION_CREDENTIALS", "")):
             cred = credentials.ApplicationDefault()
             logger.info("Firebase: using application default credentials")
         else:
-            # Try to initialize without explicit credentials (works in GCP/Cloud Run)
             try:
                 cred = credentials.ApplicationDefault()
                 logger.info("Firebase: using implicit application default credentials")
             except Exception:
-                # Last resort: use a minimal credential setup for emulator/testing
-                logger.warning("Firebase: no credentials found, running in limited mode")
+                logger.warning("Firebase: no credentials found, running in local fallback mode")
                 return None
 
         _firebase_app = firebase_admin.initialize_app(cred, {

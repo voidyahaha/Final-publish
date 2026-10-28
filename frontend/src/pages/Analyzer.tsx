@@ -86,7 +86,7 @@ export default function Analyzer() {
                 { label: 'Key', value: result.key || 'Unknown', icon: '🎵', color: '#EC4899' },
                 { label: 'Duration', value: `${Math.floor(result.duration/60)}:${Math.floor(result.duration%60).toString().padStart(2,'0')}`, icon: '⏱', color: '#10B981' },
                 { label: 'Loudness', value: `${result.loudness?.toFixed(1)} dB`, icon: '🔊', color: '#F59E0B' },
-                { label: 'Sample Rate', value: `${result.sampleRate} Hz`, icon: '📡', color: '#06B6D4' },
+                { label: 'Sample Rate', value: `${result.sampleRate || (result as any).sample_rate || 44100} Hz`, icon: '📡', color: '#06B6D4' },
                 { label: 'Beats Found', value: result.beats?.length || 0, icon: '🥁', color: '#8B5CF6' },
               ].map(stat => (
                 <div key={stat.label} className="p-3 rounded-xl bg-bg-secondary border border-border">

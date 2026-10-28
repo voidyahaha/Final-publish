@@ -47,16 +47,33 @@ apiClient.interceptors.response.use(
   }
 )
 
+export function resolveAudioUrl(url: string | undefined): string {
+  if (!url) return ''
+  if (
+    url.startsWith('http://') ||
+    url.startsWith('https://') ||
+    url.startsWith('blob:') ||
+    url.startsWith('data:')
+  ) {
+    return url
+  }
+  const base = import.meta.env.VITE_API_URL || ''
+  if (!base) return url
+  return `${base.replace(/\/$/, '')}/${url.replace(/^\//, '')}`
+}
+
 export const api = {
   // ─── Upload ────────────────────────────────────────────────────────────────
   async uploadFile(
     file: File,
     userId: string,
+    folder: string = 'originals',
     onProgress?: (pct: number, bytes: number, total: number) => void
   ) {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('user_id', userId)
+    formData.append('folder', folder)
 
     const res = await apiClient.post('/api/upload', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },

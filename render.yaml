@@ -3,15 +3,16 @@ services:
     name: stemai-backend
     runtime: docker
     dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /api/health
     envVars:
       - key: PORT
         value: "8000"
       - key: DEMUCS_MODEL
-        value: htdemucs_ft
+        value: htdemucs
       - key: FIREBASE_STORAGE_BUCKET
         value: vocal-separater-5eb7c.firebasestorage.app
       - key: FIREBASE_SERVICE_ACCOUNT_JSON
         sync: false
       - key: CORS_ORIGINS
-        sync: false
+        value: "*"
 

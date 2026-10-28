@@ -63,16 +63,20 @@ export async function getFileDownloadUrl(storagePath: string): Promise<string> {
   if (
     storagePath.startsWith('blob:') ||
     storagePath.startsWith('http://') ||
-    storagePath.startsWith('https://') ||
-    storagePath.startsWith('/api/')
+    storagePath.startsWith('https://')
   ) {
     return storagePath
+  }
+  if (storagePath.startsWith('/api/') || storagePath.startsWith('api/')) {
+    const base = import.meta.env.VITE_API_URL || ''
+    return base ? `${base.replace(/\/$/, '')}/${storagePath.replace(/^\//, '')}` : storagePath
   }
   try {
     const storageRef = ref(storage, storagePath)
     return await getDownloadURL(storageRef)
   } catch {
-    return `http://localhost:8000/api/files/${storagePath}`
+    const base = import.meta.env.VITE_API_URL || ''
+    return base ? `${base.replace(/\/$/, '')}/api/files/${storagePath}` : `/api/files/${storagePath}`
   }
 }
 

@@ -87,25 +87,30 @@ export default function VocalMixer() {
 
       toast.loading('Starting mix...', { id: 'mix-toast' })
 
-      const jobRef = await addDoc(collection(db, 'jobs'), {
-        userId: user.uid,
-        type: 'vocal_mix',
-        status: 'queued',
-        progress: 0,
-        statusMessage: 'Mix queued',
-        originalFileName: vocalFile?.name || 'recording.webm',
-        originalStoragePath: vocalResult.storagePath,
-        vocalStoragePath: vocalResult.storagePath,
-        instrumentalStoragePath: instResult.storagePath,
-        vocalGain,
-        instrumentalGain,
-        timeStretch,
-        stems: [],
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      })
+      let jobId = ''
+      try {
+        const jobRef = await addDoc(collection(db, 'jobs'), {
+          userId: user.uid,
+          type: 'vocal_mix',
+          status: 'queued',
+          progress: 0,
+          statusMessage: 'Mix queued',
+          originalFileName: vocalFile?.name || 'recording.webm',
+          originalStoragePath: vocalResult.storagePath,
+          vocalStoragePath: vocalResult.storagePath,
+          instrumentalStoragePath: instResult.storagePath,
+          vocalGain,
+          instrumentalGain,
+          timeStretch,
+          stems: [],
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        })
+        jobId = jobRef.id
+      } catch {
+        jobId = 'job_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9)
+      }
 
-      const jobId = jobRef.id
       setActiveJobId(jobId)
 
       const newJob: Job = {

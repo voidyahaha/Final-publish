@@ -1,4 +1,5 @@
 import os
+import tempfile
 from pydantic_settings import BaseSettings
 from functools import lru_cache
 from pathlib import Path
@@ -20,11 +21,14 @@ class Settings(BaseSettings):
     DEMUCS_MODEL: str = "htdemucs"     # Best balance of speed & quality
     DEMUCS_SHIFTS: int = 0             # 0 for fast single-pass inference on CPU
     DEMUCS_OVERLAP: float = 0.25       # Chunk overlap
-    PROCESSING_TEMP_DIR: str = "/data/data/com.termux/files/usr/tmp/stemai_processing"
+    PROCESSING_TEMP_DIR: str = os.environ.get(
+        "PROCESSING_TEMP_DIR",
+        os.path.join(tempfile.gettempdir(), "stemai_processing")
+    )
     AUDIO_DATA_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data")
     MAX_CONCURRENT_JOBS: int = 2
     MAX_UPLOAD_MB: int = 250
-    CORS_ORIGINS: str = "http://localhost:5173"
+    CORS_ORIGINS: str = "*"
 
     # Audio
     OUTPUT_FORMAT: str = "wav"         # Internal processing format

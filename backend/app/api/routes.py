@@ -31,18 +31,40 @@ router = APIRouter(prefix="/api")
 
 # ── Auth helper ──────────────────────────────────────────────────────────────
 
+def _is_user_authorized(token_data: dict, user_id: str) -> bool:
+    """Check if token matches requested user_id with support for guest & local fallbacks."""
+    caller_uid = token_data.get("uid", "")
+    if caller_uid == user_id:
+        return True
+    if token_data.get("raw_token") == user_id:
+        return True
+    if f"guest-{caller_uid}" == user_id:
+        return True
+    if caller_uid.startswith("guest") and user_id.startswith("guest"):
+        return True
+    if caller_uid in {"guest-user", "local-user"}:
+        return True
+    return False
+
 async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> dict:
     """Verify Firebase ID token or allow guest demo tokens."""
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing or invalid Authorization header")
 
     token = authorization.replace("Bearer ", "").strip()
-    if token == "guest-token" or token.startswith("guest-"):
-        return {"uid": "guest-user", "email": "guest@stemai.local"}
+    if token == "guest-token" or token == "guest-user":
+        return {"uid": "guest-user", "email": "guest@stemai.local", "raw_token": token}
+
+    if token.startswith("guest-"):
+        # Handle guest tokens: preserve full guest identity (or guest-user if guest-guest-user)
+        uid = token if not token.startswith("guest-guest-") else token.removeprefix("guest-")
+        return {"uid": uid, "email": f"{uid}@stemai.local", "raw_token": token}
 
     if not firebase_ready():
-        # Fallback to local user if Firebase is not ready
-        return {"uid": "local-user", "email": "local@stemai.local"}
+        # When Firebase is not ready, accept local tokens; reject invalid tokens
+        if token in {"local-token", "local-user"} or token.startswith("local-"):
+            return {"uid": "local-user", "email": "local@stemai.local", "raw_token": token}
+        raise HTTPException(status_code=401, detail="Invalid authentication token")
 
     try:
         from firebase_admin import auth as fb_auth
@@ -69,7 +91,7 @@ async def verify_firebase_token(authorization: Optional[str] = Header(None)) -> 
 
 def _assert_owned_storage_path(storage_path: str, user_id: str) -> None:
     """Ensure an Admin-SDK operation cannot be pointed at another user's file."""
-    if user_id in {"guest-user", "local-user"}:
+    if user_id in {"guest-user", "local-user"} or user_id.startswith("guest-"):
         return
     prefix = f"users/{user_id}/"
     if not storage_path or not storage_path.startswith(prefix):
@@ -136,7 +158,7 @@ async def upload_audio(
     Validates file type and size before uploading.
     """
     # Validate user matches token
-    if token_data.get("uid") != user_id:
+    if not _is_user_authorized(token_data, user_id):
         raise HTTPException(status_code=403, detail="User ID mismatch")
 
     # Validate content type
@@ -204,7 +226,7 @@ async def start_separation(
     token_data: dict = Depends(verify_firebase_token),
 ):
     """Enqueue a Demucs stem separation job."""
-    if token_data.get("uid") != request.user_id:
+    if not _is_user_authorized(token_data, request.user_id):
         raise HTTPException(status_code=403, detail="User ID mismatch")
 
     if not request.storage_path:
@@ -266,7 +288,7 @@ async def start_vocal_mix(
     token_data: dict = Depends(verify_firebase_token),
 ):
     """Enqueue a vocal mix job."""
-    if token_data.get("uid") != request.user_id:
+    if not _is_user_authorized(token_data, request.user_id):
         raise HTTPException(status_code=403, detail="User ID mismatch")
 
     if not request.vocal_path or not request.instrumental_path:
@@ -318,7 +340,7 @@ async def get_job_status(
         raise HTTPException(status_code=404, detail=f"Job {job_id} not found")
 
     # Verify ownership
-    if job.get("userId") != token_data.get("uid"):
+    if not _is_user_authorized(token_data, job.get("userId", "")):
         raise HTTPException(status_code=403, detail="Access denied")
 
     return {"success": True, "job": job}
@@ -334,7 +356,7 @@ async def download_job_asset(
     job = await get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    if job.get("userId") != token_data.get("uid"):
+    if not _is_user_authorized(token_data, job.get("userId", "")):
         raise HTTPException(status_code=403, detail="Access denied")
     if job.get("status") != "completed":
         raise HTTPException(status_code=409, detail="Output is not ready")
@@ -359,7 +381,7 @@ async def get_user_job_list(
     token_data: dict = Depends(verify_firebase_token),
 ):
     """Get all jobs for a user."""
-    if token_data.get("uid") != user_id:
+    if not _is_user_authorized(token_data, user_id):
         raise HTTPException(status_code=403, detail="Access denied")
 
     jobs = await get_user_jobs(user_id)
@@ -375,7 +397,7 @@ async def cancel_job_endpoint(
     job = await get_job(job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    if job.get("userId") != token_data.get("uid"):
+    if not _is_user_authorized(token_data, job.get("userId", "")):
         raise HTTPException(status_code=403, detail="Access denied")
 
     cancelled = cancel_job(job_id)

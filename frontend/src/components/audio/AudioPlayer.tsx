@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import WaveSurfer from 'wavesurfer.js'
 import clsx from 'clsx'
 import { formatDuration } from '../../services/storage'
+import { resolveAudioUrl } from '../../services/api'
 
 interface AudioPlayerProps {
   url: string
@@ -12,12 +13,13 @@ interface AudioPlayerProps {
 }
 
 export default function AudioPlayer({
-  url,
+  url: rawUrl,
   title,
   subtitle,
   color = '#6366F1',
   compact = false,
 }: AudioPlayerProps) {
+  const url = resolveAudioUrl(rawUrl)
   const containerRef = useRef<HTMLDivElement>(null)
   const wavesurferRef = useRef<WaveSurfer | null>(null)
   const [playing, setPlaying] = useState(false)

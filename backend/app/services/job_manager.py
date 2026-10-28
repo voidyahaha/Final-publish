@@ -293,22 +293,22 @@ def _run_vocal_mix(
     vocal_ext = os.path.splitext(vocal_storage_path)[1] or ".webm"
     inst_ext = os.path.splitext(instrumental_storage_path)[1] or ".mp3"
 
-    vocal_local = os.path.join(work_dir, f"vocal{vocal_ext}")
-    inst_local = os.path.join(work_dir, f"instrumental{inst_ext}")
+    vocal_source = os.path.join(work_dir, f"vocal_source{vocal_ext}")
+    inst_source = os.path.join(work_dir, f"inst_source{inst_ext}")
 
-    _run_async(download_from_storage(vocal_storage_path, vocal_local))
-    _run_async(download_from_storage(instrumental_storage_path, inst_local))
+    _run_async(download_from_storage(vocal_storage_path, vocal_source))
+    _run_async(download_from_storage(instrumental_storage_path, inst_source))
 
-    for f in [vocal_local, inst_local]:
+    for f in [vocal_source, inst_source]:
         if not os.path.exists(f) or os.path.getsize(f) < 100:
             raise RuntimeError(f"Downloaded file missing: {f}")
 
-    # 2. Convert vocal to WAV if needed (webm/m4a etc)
+    # 2. Convert vocal and instrumental to normalized WAV
     vocal_wav = os.path.join(work_dir, "vocal.wav")
-    _convert_to_wav(vocal_local, vocal_wav)
+    _convert_to_wav(vocal_source, vocal_wav)
 
     inst_wav = os.path.join(work_dir, "instrumental.wav")
-    _convert_to_wav(inst_local, inst_wav)
+    _convert_to_wav(inst_source, inst_wav)
 
     check_cancel()
     status(15, "Analyzing BPM...", "processing")
