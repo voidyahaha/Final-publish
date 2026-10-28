@@ -157,19 +157,28 @@ def _run_separation(job_id, user_id, storage_path, model, work_dir, cancel_event
         logger.warning(f"[{job_id}] Analysis non-fatal error: {e}")
         analysis = {"bpm": 120.0, "key": "C major"}
 
-    # 4. Run Demucs separation
+    # 4. High-Speed Stem Separation
     stems_dir = os.path.join(work_dir, "stems")
     os.makedirs(stems_dir, exist_ok=True)
 
     check_cancel()
-    _run_async(update_job_status(job_id, "separating", 20, f"Loading AI model ({model})..."))
+    _run_async(update_job_status(job_id, "separating", 20, "Starting high-speed separation engine..."))
 
-    stem_files = separate_audio(
-        input_path=input_path,
-        output_dir=stems_dir,
-        model_name=model,
-        on_progress=progress,
-    )
+    try:
+        from app.services.fast_separator import separate_fast_stems
+        stem_files = separate_fast_stems(
+            input_path=input_path,
+            output_dir=stems_dir,
+            on_progress=progress,
+        )
+    except Exception as fast_err:
+        logger.warning(f"[{job_id}] Fast separation failed ({fast_err}), falling back to Demucs")
+        stem_files = separate_audio(
+            input_path=input_path,
+            output_dir=stems_dir,
+            model_name=model,
+            on_progress=progress,
+        )
 
     if not stem_files:
         raise RuntimeError("Demucs returned no stems")
