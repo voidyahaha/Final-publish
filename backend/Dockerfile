@@ -12,13 +12,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install lightweight CPU torch first to save download time and memory
-RUN pip install --no-cache-dir torch torchaudio --index-url https://download.pytorch.org/whl/cpu
-
 COPY requirements.txt .
-# Filter out redundant torch/torchaudio lines so pip uses CPU build
-RUN sed -i '/torch>=/d' requirements.txt && \
-    sed -i '/torchaudio>=/d' requirements.txt && \
+RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 COPY . .
